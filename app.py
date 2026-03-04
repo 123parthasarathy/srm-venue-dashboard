@@ -507,6 +507,38 @@ def parse_mech():
     return recs
 
 @st.cache_data
+def parse_bda_cc():
+    recs = []
+    pcols = {'C':1,'E':2,'H':3,'J':4,'M':5,'O':6,'Q':7,'S':8}
+    for yl, fn in [("I Year","I YEAR BDA_CC.xlsx"),("II Year","II YEAR BDA_CC.xlsx"),
+                    ("III Year","III YEAR BDA_CC.xlsx"),("IV Year","IV YEAR BDA_CC.xlsx")]:
+        fp = os.path.join(BASE_DIR,"BDA_CC",fn)
+        if not os.path.exists(fp): continue
+        wb = openpyxl.load_workbook(fp)
+        for sn in wb.sheetnames:
+            if sn.lower().startswith('sheet') or sn.lower().startswith('copy of'): continue
+            ws = wb[sn]
+            venue, fa = "", ""
+            # I Year: venue/FA at J7 or F7; II-IV Year: at F6 or J6
+            for cr in ['J7','F7','H7','F6','J6','H6']:
+                v = ws[cr].value
+                if v and isinstance(v,str):
+                    if 'venue' in v.lower() and not venue:
+                        venue = extract_venue_from_text(v)
+                    if ('faculty' in v.lower() or 'advisor' in v.lower()) and not fa:
+                        fa = extract_fa(v)
+            dr = _find_day_rows(ws, scan_start=8, scan_end=20)
+            if not dr:
+                dr = _find_day_rows(ws, scan_start=5, scan_end=16)
+            tt = _read_tt_wide(ws, dr, pcols)
+            minr = min(dr.values()) if dr else 10
+            maxr = max(dr.values()) if dr else 14
+            rot = get_inline_venues(ws, minr, maxr)
+            recs.append({'year':yl,'section':sn.strip(),'venue':venue or '(Not specified)',
+                         'fa':fa,'timetable':tt,'rotation_venues':rot})
+    return recs
+
+@st.cache_data
 def parse_civil():
     from docx import Document
     recs = []
@@ -605,6 +637,8 @@ DEPARTMENTS = {
                  "parser": lambda: [r for r in parse_iot_csbs() if r.get('sub_dept')=='IoT']},
     "ECE":      {"name":"Electronics & Communication Engg",     "icon":"📟",
                  "parser": lambda: []},
+    "BDA & CC": {"name":"Big Data Analytics & Cloud Computing", "icon":"📈",
+                 "parser": parse_bda_cc},
 }
 
 DAY_NAMES = {'MON':'Monday','TUE':'Tuesday','WED':'Wednesday','THU':'Thursday','FRI':'Friday'}
