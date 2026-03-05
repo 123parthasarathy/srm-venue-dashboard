@@ -901,40 +901,13 @@ def main():
     # ════════════════════════════════
     if st.session_state.dept is None:
         dept_keys = list(DEPARTMENTS.keys())
-        # Row 1: first 4 departments
-        cols = st.columns(4)
-        for i in range(min(4, len(dept_keys))):
-            dk = dept_keys[i]
-            d = DEPARTMENTS[dk]
-            with cols[i]:
-                if st.button(f"{d['icon']}\n\n{dk}", key=f"d_{dk}", use_container_width=True,
-                             help=d['name']):
-                    st.session_state.dept = dk
-                    st.session_state.day = None
-                    st.rerun()
-                st.caption(d['name'])
-
-        # Row 2: next 4+ departments
-        if len(dept_keys) > 4:
-            cols2 = st.columns(4)
-            for i in range(4, min(8, len(dept_keys))):
-                dk = dept_keys[i]
+        cols_per_row = 4
+        for row_start in range(0, len(dept_keys), cols_per_row):
+            row_items = dept_keys[row_start:row_start + cols_per_row]
+            row_cols = st.columns(cols_per_row)
+            for j, dk in enumerate(row_items):
                 d = DEPARTMENTS[dk]
-                with cols2[i - 4]:
-                    if st.button(f"{d['icon']}\n\n{dk}", key=f"d_{dk}", use_container_width=True,
-                                 help=d['name']):
-                        st.session_state.dept = dk
-                        st.session_state.day = None
-                        st.rerun()
-                    st.caption(d['name'])
-
-        # Row 3: remaining departments (9+)
-        if len(dept_keys) > 8:
-            cols3 = st.columns(4)
-            for i in range(8, len(dept_keys)):
-                dk = dept_keys[i]
-                d = DEPARTMENTS[dk]
-                with cols3[i - 8]:
+                with row_cols[j]:
                     if st.button(f"{d['icon']}\n\n{dk}", key=f"d_{dk}", use_container_width=True,
                                  help=d['name']):
                         st.session_state.dept = dk
