@@ -539,6 +539,99 @@ def parse_bda_cc():
     return recs
 
 @st.cache_data
+def parse_aiml_ai():
+    recs = []
+    period_cols = {3:1, 5:2, 8:3, 10:4, 13:5, 15:6, 17:7, 19:8}
+    day_map = {'MON':'MON','TUES':'TUE','TUE':'TUE','WED':'WED','THUR':'THU','THURS':'THU','THU':'THU','FRI':'FRI'}
+    skip_sheets = {'sheet1','sheet2','copy of','ostin'}
+
+    files = [
+        ("I Year", "I YEAR EVEN 25-26.xlsx"),
+        ("II Year", "II YEAR-EVEN(25-26 EVEN).xlsx"),
+        ("III Year", "III YEAR-25-26(EVEN).xlsx"),
+        ("IV Year", "IV YEAR (25-26 EVEN).xlsx"),
+    ]
+
+    for yl, fn in files:
+        fp = os.path.join(BASE_DIR, "AIML_AI", fn)
+        if not os.path.exists(fp):
+            continue
+        wb = openpyxl.load_workbook(fp)
+        for sn in wb.sheetnames:
+            sn_lower = sn.strip().lower()
+            # Skip rotation sheets, empty sheets, non-timetable sheets
+            if any(sn_lower.startswith(s) for s in skip_sheets):
+                continue
+            if 'rotation' in sn_lower:
+                continue
+
+            ws = wb[sn]
+
+            # Determine sub-department from sheet name
+            if 'AI ' in sn and 'AIML' not in sn.upper():
+                sub_dept = 'AI'
+            else:
+                sub_dept = 'AIML'
+
+            # Find info row with YEAR/SEM/SEC and FA
+            fa = ""
+            section = sn.strip()
+            for r in range(5, 12):
+                a_val = str(ws.cell(row=r, column=1).value or '')
+                if 'YEAR/SEM/SEC' in a_val.upper():
+                    # Extract section name
+                    sm = re.search(r'YEAR/SEM/SEC\s*:\s*(.*)', a_val, re.IGNORECASE)
+                    if sm:
+                        section = sm.group(1).strip().rstrip("'\" ")
+                    # FA could be at col 6, 8, or 10 on same row
+                    for fc in [6, 8, 10]:
+                        fv = str(ws.cell(row=r, column=fc).value or '')
+                        fm = re.search(r'FACULTY\s*ADVISOR\s*:?\s*(.*)', fv, re.IGNORECASE)
+                        if fm:
+                            fa = fm.group(1).strip().rstrip(',')
+                            break
+                        # Some have just name without "FACULTY ADVISOR" prefix
+                        if not fm and fc == 10 and fv.strip() and 'FACULTY' not in fv.upper():
+                            fa = fv.strip()
+                    break
+
+            # Find day rows by scanning for MON/TUES/WED/THUR/FRI
+            tt = {}
+            for r in range(8, 20):
+                av = str(ws.cell(row=r, column=1).value or '').strip().upper()
+                day_key = day_map.get(av)
+                if not day_key:
+                    continue
+                tt[day_key] = {}
+                for col, pnum in period_cols.items():
+                    cv = ws.cell(row=r, column=col).value
+                    if cv and isinstance(cv, str):
+                        cv = cv.strip()
+                        if cv.upper() in ('BREAK', 'LUNCH'):
+                            cv = ""
+                    elif cv:
+                        cv = str(cv).strip()
+                    else:
+                        cv = ""
+                    tt[day_key][pnum] = cv
+
+            # Extract rotation venues from timetable cells
+            rot = set()
+            for day_data in tt.values():
+                for subj in day_data.values():
+                    if subj:
+                        vms = re.findall(r'\(([^)]*(?:B-III|BLOCK|AD|BMS|LH|NA)\s*\d*[^)]*)\)', subj, re.IGNORECASE)
+                        rot.update(v.strip() for v in vms)
+
+            recs.append({
+                'year': yl, 'section': section,
+                'venue': '(Not specified)', 'fa': fa,
+                'timetable': tt, 'rotation_venues': sorted(rot),
+                'sub_dept': sub_dept,
+            })
+    return recs
+
+@st.cache_data
 def parse_ece():
     recs = []
     fp = os.path.join(BASE_DIR, "ECE-TT 25-26 EVEN sem.xlsx")
@@ -704,6 +797,10 @@ DEPARTMENTS = {
                  "parser": parse_ece},
     "BDA & CC": {"name":"Big Data Analytics & Cloud Computing", "icon":"📈",
                  "parser": parse_bda_cc},
+    "AIML":     {"name":"CSE (AI & Machine Learning)",          "icon":"🤖",
+                 "parser": lambda: [r for r in parse_aiml_ai() if r.get('sub_dept')=='AIML']},
+    "AI":       {"name":"CSE (Artificial Intelligence)",        "icon":"🧠",
+                 "parser": lambda: [r for r in parse_aiml_ai() if r.get('sub_dept')=='AI']},
 }
 
 DAY_NAMES = {'MON':'Monday','TUE':'Tuesday','WED':'Wednesday','THU':'Thursday','FRI':'Friday'}
