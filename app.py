@@ -539,6 +539,71 @@ def parse_bda_cc():
     return recs
 
 @st.cache_data
+def parse_ece():
+    recs = []
+    fp = os.path.join(BASE_DIR, "ECE-TT 25-26 EVEN sem.xlsx")
+    if not os.path.exists(fp):
+        return recs
+    wb = openpyxl.load_workbook(fp)
+    year_map = {'1st ECE': 'I Year', '2nd ECE': 'II Year', '3rd ECE': 'III Year'}
+    day_map = {1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI'}
+
+    for sn in wb.sheetnames:
+        ws = wb[sn]
+        yl = year_map.get(sn, sn)
+
+        # Room No from row 4, col H (8)
+        venue = ""
+        rv = str(ws.cell(row=4, column=8).value or '')
+        m = re.search(r'Room\s*No\.?\s*:?\s*(.*)', rv, re.IGNORECASE)
+        if m:
+            venue = m.group(1).strip()
+
+        # Class incharge from row 5, col E (5)
+        fa = ""
+        ci = str(ws.cell(row=5, column=5).value or '')
+        m2 = re.search(r'CLASS\s*INCHARGE\s*:\s*(.*)', ci, re.IGNORECASE)
+        if m2:
+            fa = m2.group(1).strip()
+
+        # Section from row 5, col A
+        sec_raw = str(ws.cell(row=5, column=1).value or '')
+        sec_m = re.search(r'CLASS\s*:\s*(.*)', sec_raw, re.IGNORECASE)
+        section = sec_m.group(1).strip() if sec_m else sn
+
+        # Find timetable rows: "Day 1" through "Day 5"
+        tt = {}
+        for r in range(6, min(ws.max_row + 1, 20)):
+            av = str(ws.cell(row=r, column=1).value or '').strip()
+            dm = re.match(r'Day\s*(\d)', av, re.IGNORECASE)
+            if dm:
+                day_num = int(dm.group(1))
+                day_key = day_map.get(day_num)
+                if not day_key:
+                    continue
+                tt[day_key] = {}
+                # Periods: col 2-5 = P1-P4 (before lunch), col 7-10 = P5-P8 (after lunch)
+                period_cols = {2: 1, 3: 2, 4: 3, 5: 4, 7: 5, 8: 6, 9: 7, 10: 8}
+                for col, pnum in period_cols.items():
+                    cv = ws.cell(row=r, column=col).value
+                    if cv and isinstance(cv, str):
+                        cv = cv.strip()
+                        if cv.upper() in ('BREAK', 'LUNCH', 'LIB'):
+                            cv = cv
+                        tt[day_key][pnum] = cv
+                    elif cv:
+                        tt[day_key][pnum] = str(cv).strip()
+                    else:
+                        tt[day_key][pnum] = ""
+
+        recs.append({
+            'year': yl, 'section': f'ECE {section}',
+            'venue': venue or '(Not specified)', 'fa': fa,
+            'timetable': tt, 'rotation_venues': []
+        })
+    return recs
+
+@st.cache_data
 def parse_civil():
     from docx import Document
     recs = []
@@ -636,7 +701,7 @@ DEPARTMENTS = {
     "IoT":      {"name":"Internet of Things",                   "icon":"📡",
                  "parser": lambda: [r for r in parse_iot_csbs() if r.get('sub_dept')=='IoT']},
     "ECE":      {"name":"Electronics & Communication Engg",     "icon":"📟",
-                 "parser": lambda: []},
+                 "parser": parse_ece},
     "BDA & CC": {"name":"Big Data Analytics & Cloud Computing", "icon":"📈",
                  "parser": parse_bda_cc},
 }
