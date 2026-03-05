@@ -705,6 +705,93 @@ def parse_ece():
     return recs
 
 @st.cache_data
+def parse_it():
+    from docx import Document
+    recs = []
+    day_map = {'MON':'MON','TUE':'TUE','WED':'WED','THU':'THU','FRI':'FRI'}
+
+    files = [
+        ("I Year", "1    IT 1st Yr ABCDE TT with Venue 25-26 EVEN.docx"),
+        ("II Year", "2     IT 2nd Yr ABCD  TT with Venue 25-26 EVEN.docx"),
+        ("III Year", "3     IT 3rd Yr ABC  TT with Venue 25-26 EVEN.docx"),
+    ]
+
+    for yl, fn in files:
+        fp = os.path.join(BASE_DIR, "IT", fn)
+        if not os.path.exists(fp):
+            continue
+        doc = Document(fp)
+
+        # Collect section info from paragraphs
+        sections_info = []
+        for p in doc.paragraphs:
+            txt = p.text.strip()
+            # Match "I YEAR, SEM: II, SECTION: A" or similar
+            sm = re.search(r'SECTION:\s*([A-Z])', txt, re.IGNORECASE)
+            if sm:
+                sec_letter = sm.group(1).upper()
+                sections_info.append({'section': f'IT {sec_letter}', 'venue': '', 'fa': ''})
+            # Match "Class-In-Charge: ... Block/ Room No: ..."
+            if 'class-in-charge' in txt.lower() and sections_info:
+                cm = re.search(r'Class-In-Charge:\s*(.*?)(?:\t|Block/)', txt, re.IGNORECASE)
+                if cm:
+                    sections_info[-1]['fa'] = cm.group(1).strip().rstrip(',').strip()
+                vm = re.search(r'Block/\s*Room\s*No:\s*(.*)', txt, re.IGNORECASE)
+                if vm:
+                    sections_info[-1]['venue'] = vm.group(1).strip()
+
+        # Even-indexed tables are timetables, odd are subject details
+        tt_tables = [doc.tables[i] for i in range(0, len(doc.tables), 2)]
+
+        for idx, table in enumerate(tt_tables):
+            if idx >= len(sections_info):
+                break
+            info = sections_info[idx]
+            tt = {}
+            rot = set()
+            for ri in range(1, min(6, len(table.rows))):
+                cells = [c.text.strip() for c in table.rows[ri].cells]
+                day_raw = cells[0].upper() if cells else ''
+                day_key = day_map.get(day_raw)
+                if not day_key:
+                    continue
+                tt[day_key] = {}
+                # Columns: 0=Day, 1=P1, 2=P2, 3=P3, 4=P4, 5=LUNCH, 6=P5, 7=P6, 8=P7, 9=P8
+                col_period = {1:1, 2:2, 3:3, 4:4, 6:5, 7:6, 8:7, 9:8}
+                # Handle tables with 11 cols (duplicate col)
+                if len(cells) >= 11:
+                    col_period = {1:1, 2:2, 3:2, 4:3, 5:4, 7:5, 8:6, 9:7, 10:8}
+                for ci, pnum in col_period.items():
+                    if ci >= len(cells):
+                        continue
+                    val = cells[ci]
+                    if not val or val in ('-', '--') or 'LUNCH' in val.upper():
+                        tt[day_key][pnum] = ''
+                        continue
+                    # Extract venue from cell (after \n)
+                    lines = val.split('\n')
+                    venues_in_cell = []
+                    for line in lines[1:]:
+                        line = line.strip()
+                        if line and not line.startswith('<') and not line.startswith('-'):
+                            venues_in_cell.append(line)
+                    rot.update(v for v in venues_in_cell if re.search(r'(Adm|BMS|Block|B-III|LH|NA|NwAdm)', v, re.IGNORECASE))
+                    # Show subject code (first line)
+                    display = lines[0].strip()
+                    if venues_in_cell:
+                        display += f" ({venues_in_cell[0]})"
+                    tt[day_key][pnum] = display
+
+            recs.append({
+                'year': yl, 'section': info['section'],
+                'venue': info['venue'] or '(Not specified)',
+                'fa': info['fa'],
+                'timetable': tt, 'rotation_venues': sorted(rot),
+            })
+
+    return recs
+
+@st.cache_data
 def parse_civil():
     from docx import Document
     recs = []
@@ -805,6 +892,8 @@ DEPARTMENTS = {
                  "parser": parse_ece},
     "BDA & CC": {"name":"Big Data Analytics & Cloud Computing", "icon":"📈",
                  "parser": parse_bda_cc},
+    "IT":       {"name":"Information Technology",                 "icon":"🖥️",
+                 "parser": parse_it},
     "AIML":     {"name":"CSE (AI & Machine Learning)",          "icon":"🤖",
                  "parser": lambda: [r for r in parse_aiml_ai() if r.get('sub_dept')=='AIML']},
     "AI":       {"name":"CSE (Artificial Intelligence)",        "icon":"🧠",
