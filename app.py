@@ -573,8 +573,9 @@ def parse_aiml_ai():
             else:
                 sub_dept = 'AIML'
 
-            # Find info row with YEAR/SEM/SEC and FA
+            # Find info row with YEAR/SEM/SEC, FA, and Venue
             fa = ""
+            venue = ""
             section = sn.strip()
             for r in range(5, 12):
                 a_val = str(ws.cell(row=r, column=1).value or '')
@@ -583,16 +584,23 @@ def parse_aiml_ai():
                     sm = re.search(r'YEAR/SEM/SEC\s*:\s*(.*)', a_val, re.IGNORECASE)
                     if sm:
                         section = sm.group(1).strip().rstrip("'\" ")
-                    # FA could be at col 6, 8, or 10 on same row
+                    # FA and Venue could be at col 6, 8, or 10 on same row
                     for fc in [6, 8, 10]:
                         fv = str(ws.cell(row=r, column=fc).value or '')
-                        fm = re.search(r'FACULTY\s*ADVISOR\s*:?\s*(.*)', fv, re.IGNORECASE)
-                        if fm:
-                            fa = fm.group(1).strip().rstrip(',')
-                            break
-                        # Some have just name without "FACULTY ADVISOR" prefix
-                        if not fm and fc == 10 and fv.strip() and 'FACULTY' not in fv.upper():
-                            fa = fv.strip()
+                        if not fv.strip():
+                            continue
+                        # Extract venue from the cell (e.g. "...Venue: B-III 601")
+                        vm = re.search(r'Venue\s*:\s*(\S.*?)$', fv, re.IGNORECASE)
+                        if vm and vm.group(1).strip() and not venue:
+                            venue = vm.group(1).strip()
+                        # Extract FA - strip venue part first
+                        fa_text = re.sub(r'\s*Venue\s*:.*$', '', fv, flags=re.IGNORECASE).strip()
+                        if not fa:
+                            fm = re.search(r'FACULTY\s*ADVISOR\s*:?\s*(.*)', fa_text, re.IGNORECASE)
+                            if fm:
+                                fa = fm.group(1).strip().rstrip(',')
+                            elif fc == 10 and fa_text and 'FACULTY' not in fa_text.upper():
+                                fa = fa_text
                     break
 
             # Find day rows by scanning for MON/TUES/WED/THUR/FRI
@@ -625,7 +633,7 @@ def parse_aiml_ai():
 
             recs.append({
                 'year': yl, 'section': section,
-                'venue': '(Not specified)', 'fa': fa,
+                'venue': venue or '(Not specified)', 'fa': fa,
                 'timetable': tt, 'rotation_venues': sorted(rot),
                 'sub_dept': sub_dept,
             })
