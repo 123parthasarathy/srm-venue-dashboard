@@ -6,6 +6,8 @@
       "id": "CSE",
       "name": "Computer Science & Engineering",
       "icon": "💻",
+      "color": "#4285F4",
+      "bg": "#E8F0FE",
       "parser": "excel_sections",
       "path": "CSE"
     },
@@ -13,6 +15,8 @@
       "id": "CS & GT",
       "name": "Cyber Security and Gaming Technology",
       "icon": "🎮",
+      "color": "#EA4335",
+      "bg": "#FCE8E6",
       "parser": "csgt_pdf",
       "path": "CS_GT",
       "semester": "2026-27 Odd"
@@ -21,6 +25,8 @@
       "id": "BIOTECH",
       "name": "Biotechnology",
       "icon": "🧬",
+      "color": "#FBBC04",
+      "bg": "#FEF7E0",
       "parser": "excel_sections",
       "path": "BIOTECH TT EVEN SEM 25-26  REVISED 8.1.25.xlsx"
     },
@@ -28,6 +34,8 @@
       "id": "Bio-Med",
       "name": "Biomedical Engineering",
       "icon": "🏥",
+      "color": "#34A853",
+      "bg": "#E6F4EA",
       "parser": "excel_sections",
       "path": "Bio-Med"
     },
@@ -35,6 +43,8 @@
       "id": "MECH",
       "name": "Mechanical Engineering",
       "icon": "⚙️",
+      "color": "#4285F4",
+      "bg": "#E8F0FE",
       "parser": "mech",
       "path": "MECH_DAYWise_Class _TIME TABLE EVEN SEMESTER (2025-26).xlsx"
     },
@@ -42,6 +52,8 @@
       "id": "CIVIL",
       "name": "Civil Engineering",
       "icon": "🏗️",
+      "color": "#EA4335",
+      "bg": "#FCE8E6",
       "parser": "civil_docx",
       "path": "."
     },
@@ -49,6 +61,8 @@
       "id": "EEE",
       "name": "Electrical & Electronics Engineering",
       "icon": "⚡",
+      "color": "#FBBC04",
+      "bg": "#FEF7E0",
       "parser": "eee_xls",
       "path": "EEE time table.xls"
     },
@@ -56,6 +70,8 @@
       "id": "CSBS",
       "name": "Computer Science & Business Systems",
       "icon": "📊",
+      "color": "#34A853",
+      "bg": "#E6F4EA",
       "parser": "iot_csbs",
       "path": "IOT, CSBS.xlsx",
       "sub_dept": "CSBS"
@@ -64,6 +80,8 @@
       "id": "IoT",
       "name": "Internet of Things",
       "icon": "📡",
+      "color": "#4285F4",
+      "bg": "#E8F0FE",
       "parser": "iot_csbs",
       "path": "IOT, CSBS.xlsx",
       "sub_dept": "IoT"
@@ -72,6 +90,8 @@
       "id": "ECE",
       "name": "Electronics & Communication Engg",
       "icon": "📟",
+      "color": "#EA4335",
+      "bg": "#FCE8E6",
       "parser": "ece",
       "path": "ECE-TT 25-26 EVEN sem.xlsx"
     },
@@ -79,6 +99,8 @@
       "id": "BDA & CC",
       "name": "Big Data Analytics & Cloud Computing",
       "icon": "📈",
+      "color": "#FBBC04",
+      "bg": "#FEF7E0",
       "parser": "excel_sections",
       "path": "BDA_CC"
     },
@@ -86,6 +108,8 @@
       "id": "IT",
       "name": "Information Technology",
       "icon": "🖥️",
+      "color": "#34A853",
+      "bg": "#E6F4EA",
       "parser": "it_docx",
       "path": "IT"
     },
@@ -93,6 +117,8 @@
       "id": "AIML",
       "name": "CSE (AI & Machine Learning)",
       "icon": "🤖",
+      "color": "#4285F4",
+      "bg": "#E8F0FE",
       "parser": "excel_sections",
       "path": "AIML_AI",
       "sheet_group": "AIML"
@@ -101,6 +127,8 @@
       "id": "AI",
       "name": "CSE (Artificial Intelligence)",
       "icon": "🧠",
+      "color": "#EA4335",
+      "bg": "#FCE8E6",
       "parser": "excel_sections",
       "path": "AIML_AI",
       "sheet_group": "AI"
