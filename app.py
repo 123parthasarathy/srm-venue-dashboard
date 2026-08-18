@@ -28,7 +28,7 @@ from ingest import (
 )
 
 st.set_page_config(
-    page_title="SRM Ramapuram · Venue Dashboard",
+    page_title="SRM Ramapuram · 2026-27 Odd Semester",
     page_icon="🏫",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -84,11 +84,12 @@ def folder_card(d: dict, dk: str, n: int, default_sem: str) -> str:
     )
 
 
-def hero_block(title: str, subtitle: str) -> str:
+def hero_block(title: str, subtitle: str, semester: str) -> str:
     return (
         '<div class="g-stripe"><span class="b"></span><span class="r"></span>'
         '<span class="y"></span><span class="g"></span></div>'
         f'<div class="hero"><h1>{hx(title)}</h1>'
+        f'<div class="hero-sem">{hx(semester)}</div>'
         f"<p>{hx(subtitle)} · Public link · no login</p></div>"
     )
 
@@ -130,6 +131,11 @@ header[data-testid="stHeader"] { background: transparent; }
     border: 1px solid #E8EAED; border-top: none;
 }
 .hero h1 { font-size: 21px; font-weight: 700; margin: 0; color: #202124; }
+.hero-sem {
+    display: inline-block; margin-top: 10px; padding: 4px 12px;
+    background: #4285F4; color: #fff; border-radius: 999px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+}
 .hero p { margin: 6px 0 0; font-size: 13px; color: #5F6368; }
 
 .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 8px; }
@@ -425,7 +431,14 @@ def main() -> None:
     n_sec = sum(len(v) for v in catalog.values())
     n_ok = sum(1 for v in catalog.values() if v)
 
-    st.markdown(hero_block(cfg.get("title", ""), cfg.get("subtitle", "")), unsafe_allow_html=True)
+    st.markdown(
+        hero_block(
+            cfg.get("title", "SRM Institute of Science and Technology — Ramapuram Campus"),
+            cfg.get("subtitle", "All Programme Venue Dashboard"),
+            cfg.get("semester", "2026-27 Odd Semester"),
+        ),
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f'<div class="stats">'
         f'<div class="stat"><b>{len(cfg["departments"])}</b> programmes</div>'
