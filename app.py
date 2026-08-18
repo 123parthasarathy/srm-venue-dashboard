@@ -27,8 +27,11 @@ from ingest import (
     year_sort,
 )
 
+SEMESTER = "2026-27 Odd Semester"
+CAMPUS_TITLE = "SRM Institute of Science and Technology — Ramapuram Campus"
+
 st.set_page_config(
-    page_title="SRM Ramapuram · 2026-27 Odd Semester",
+    page_title=f"SRM Ramapuram · {SEMESTER}",
     page_icon="🏫",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -84,13 +87,13 @@ def folder_card(d: dict, dk: str, n: int, default_sem: str) -> str:
     )
 
 
-def hero_block(title: str, subtitle: str, semester: str) -> str:
+def hero_block() -> str:
     return (
         '<div class="g-stripe"><span class="b"></span><span class="r"></span>'
         '<span class="y"></span><span class="g"></span></div>'
-        f'<div class="hero"><h1>{hx(title)}</h1>'
-        f'<div class="hero-sem">{hx(semester)}</div>'
-        f"<p>{hx(subtitle)} · Public link · no login</p></div>"
+        f'<div class="hero"><h1>{hx(CAMPUS_TITLE)}</h1>'
+        f'<div class="hero-sem">{hx(SEMESTER)}</div>'
+        "<p>All Programme Venue Dashboard · Public link · no login</p></div>"
     )
 
 
@@ -427,18 +430,11 @@ def main() -> None:
     cfg = load_config()
     catalog, errors, occ = load_catalog(data_stamp(ROOT, DATA_DIR))
     meta = dept_map(cfg)
-    default_sem = cfg.get("semester", "2026-27 Odd Semester")
+    default_sem = SEMESTER
     n_sec = sum(len(v) for v in catalog.values())
     n_ok = sum(1 for v in catalog.values() if v)
 
-    st.markdown(
-        hero_block(
-            cfg.get("title", "SRM Institute of Science and Technology — Ramapuram Campus"),
-            cfg.get("subtitle", "All Programme Venue Dashboard"),
-            cfg.get("semester", "2026-27 Odd Semester"),
-        ),
-        unsafe_allow_html=True,
-    )
+    st.markdown(hero_block(), unsafe_allow_html=True)
     st.markdown(
         f'<div class="stats">'
         f'<div class="stat"><b>{len(cfg["departments"])}</b> programmes</div>'
