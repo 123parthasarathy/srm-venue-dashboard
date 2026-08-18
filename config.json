@@ -13,8 +13,9 @@
       "id": "CS & GT",
       "name": "Cyber Security and Gaming Technology",
       "icon": "🎮",
-      "parser": "excel_sections",
-      "path": "CS_GT"
+      "parser": "csgt_pdf",
+      "path": "CS_GT",
+      "semester": "2026-27 Odd"
     },
     {
       "id": "BIOTECH",

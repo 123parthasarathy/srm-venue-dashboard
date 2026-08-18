@@ -5,8 +5,8 @@ Public link (anyone can view, no login):
 https://srm-venue-dashboard-bsvhpqvfgqsftcnphjhphd.streamlit.app/
 
 Programmes: 14
-Sections:   153
-Period rows:3335
+Sections:   161
+Period rows:3412
 
 This folder:
   All_Venue_Details.xlsx  — one sheet per programme + Summary

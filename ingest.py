@@ -667,6 +667,156 @@ def parse_civil_docx(data_dir: str, cfg: dict) -> list[dict]:
     return recs
 
 
+def _csgt_spec(text: str) -> str:
+    u = text.upper()
+    if "DATA SCIENCE" in u:
+        return "DS"
+    if "GAMING" in u:
+        return "GT"
+    return "CS"
+
+
+def _csgt_section_label(spec: str, raw: str) -> str:
+    s = re.sub(r"\s+", " ", (raw or "").strip())
+    s = s.replace("'", "").strip()
+    su = s.upper()
+    if spec == "GT":
+        if su in {"A", "B", "C", "D", "E"}:
+            return f"GT {s}"
+        if "GT" in su:
+            label = s.replace("CSE GT", "GT").replace("CSE-GT", "GT")
+            return label if re.search(r"GT\s*[A-E]", label, re.I) else "GT A"
+        return "GT A"
+    if spec == "DS":
+        return s if su.startswith("DS") else f"DS {s}"
+    if spec == "CS":
+        if su.startswith("CS"):
+            return s
+        return f"CS {s}"
+    return s
+
+
+def parse_csgt_pdf(data_dir: str, cfg: dict) -> list[dict]:
+    """Parse CS / GT / DS odd-semester PDF timetables (one section per page)."""
+    import pdfplumber
+
+    files = list_files(data_dir, cfg["path"], (".pdf",))
+    by_key: dict[tuple, dict] = {}
+    skip = {"BREAK", "LUNCH", "B", "R", "E", "A", "K", "U", "N", "C", "H", "L", "P", "I", "O"}
+
+    for fp in files:
+        yl_file = year_from_text(os.path.basename(fp))
+        with pdfplumber.open(fp) as doc:
+            for page in doc.pages:
+                text = page.extract_text() or ""
+                if "YEAR/SEM/SEC" not in text.upper():
+                    continue
+                spec = _csgt_spec(text)
+                header = ""
+                for line in text.splitlines():
+                    if "YEAR/SEM/SEC" in line.upper():
+                        header = line
+                        break
+                ym = re.search(
+                    r"YEAR/SEM/SEC\s*:\s*(I{1,3}V?)\s*/\s*[^/]*/\s*(.*?)(?:\s+FACULTY|$)",
+                    header,
+                    re.IGNORECASE,
+                )
+                year = {
+                    "I": "I Year",
+                    "II": "II Year",
+                    "III": "III Year",
+                    "IV": "IV Year",
+                }.get((ym.group(1).upper() if ym else ""), yl_file or "")
+                raw_sec = ym.group(2).strip() if ym else "Section"
+                section = _csgt_section_label(spec, raw_sec)
+
+                fa = ""
+                fm = re.search(r"FACULTY\s*ADVISOR\s*:\s*(.*?)\s*Venue", header, re.IGNORECASE)
+                if fm:
+                    fa = fm.group(1).strip(" :")
+                else:
+                    fm = re.search(r"FACULTY\s*ADVISOR\s*:\s*(.*)$", header, re.IGNORECASE)
+                    if fm:
+                        fa = re.sub(r"\s*Venue.*$", "", fm.group(1), flags=re.IGNORECASE).strip(" :")
+
+                venue = ""
+                vm = re.search(r"Venue\s*:?\s*(.+)$", header, re.IGNORECASE)
+                if vm:
+                    venue = re.sub(r"\s+", " ", vm.group(1)).strip(" :")
+                    venue = re.sub(r"\s*/\s*", "/", venue)
+
+                tt = {d: {} for d in DAYS}
+                rot = set()
+                tables = page.extract_tables() or []
+                if tables:
+                    table = max(tables, key=lambda t: len(t))
+                    period_cols = {}
+                    for row in table:
+                        if not row:
+                            continue
+                        first = str(row[0] or "").strip().upper()
+                        if first.startswith("PERIOD"):
+                            for i, cell in enumerate(row[1:], 1):
+                                c = str(cell or "").strip()
+                                if c.isdigit() and 1 <= int(c) <= 8:
+                                    period_cols[i] = int(c)
+                            break
+                    if not period_cols:
+                        period_cols = {1: 1, 2: 2, 4: 3, 5: 4, 8: 5, 10: 6, 11: 7, 12: 8}
+                    for row in table:
+                        if not row:
+                            continue
+                        first = str(row[0] or "").strip().upper()
+                        day = None
+                        if first.startswith("MON"):
+                            day = "MON"
+                        elif first.startswith("TUE"):
+                            day = "TUE"
+                        elif first.startswith("WED"):
+                            day = "WED"
+                        elif first.startswith("THU"):
+                            day = "THU"
+                        elif first.startswith("FRI"):
+                            day = "FRI"
+                        if not day:
+                            continue
+                        for i, pnum in period_cols.items():
+                            if i >= len(row):
+                                continue
+                            val = re.sub(r"\s+", " ", str(row[i] or "")).strip()
+                            if not val or val.upper() in skip or val.upper() in ("BREAK", "LUNCH"):
+                                continue
+                            if re.fullmatch(r"[BREAKLUNCHIOP]+", val.upper().replace(" ", "")):
+                                continue
+                            rooms = re.findall(
+                                r"\(([^)]*(?:ADMIN|BMS|NA|NEW|BLOCK|AD\s*\d)[^)]*)\)",
+                                val,
+                                re.IGNORECASE,
+                            )
+                            rot.update(re.sub(r"\s+", " ", r).strip() for r in rooms)
+                            tt[day][pnum] = val
+
+                rec = {
+                    "year": year or "I Year",
+                    "section": section,
+                    "venue": venue or "(Not specified)",
+                    "fa": fa,
+                    "timetable": tt,
+                    "rotation_venues": sorted(rot),
+                    "spec": spec,
+                }
+                key = (rec["year"], spec, re.sub(r"\s+", " ", section.upper()))
+                prev = by_key.get(key)
+                if not prev or len(venue) >= len(prev.get("venue") or ""):
+                    by_key[key] = rec
+
+    order = {"CS": 0, "GT": 1, "DS": 2}
+    recs = list(by_key.values())
+    recs.sort(key=lambda r: (year_sort(r["year"]), order.get(r.get("spec", ""), 9), r["section"]))
+    return recs
+
+
 PARSERS = {
     "excel_sections": parse_excel_sections,
     "mech": parse_mech,
@@ -675,6 +825,7 @@ PARSERS = {
     "ece": parse_ece,
     "it_docx": parse_it_docx,
     "civil_docx": parse_civil_docx,
+    "csgt_pdf": parse_csgt_pdf,
 }
 
 

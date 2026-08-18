@@ -359,7 +359,8 @@ def main() -> None:
                     if st.button(f"{d.get('icon', '')}  {dk}", key=f"d_{dk}", use_container_width=True, help=d["name"]):
                         nav(dept=dk)
                         st.rerun()
-                    st.caption(f"{d['name']} · {n} sections")
+                    extra = f" · {d['semester']}" if d.get("semester") else ""
+                    st.caption(f"{d['name']} · {n} sections{extra}")
         with st.expander("How to update when a new timetable arrives"):
             st.markdown(
                 """
@@ -385,7 +386,8 @@ This link is **public** — anyone can open it. No login.
 
     st.markdown(
         f'<div class="dept-banner"><h2>{hx(dept.get("icon",""))} {hx(dept_key)} — {hx(dept["name"])}</h2>'
-        f'<p>{len(records)} sections · {len({r["year"] for r in records})} years · '
+        f'<p>{len(records)} sections · {len({r["year"] for r in records})} years'
+        f'{(" · " + hx(dept["semester"])) if dept.get("semester") else ""} · '
         f"share this view: the URL keeps the programme</p></div>",
         unsafe_allow_html=True,
     )
