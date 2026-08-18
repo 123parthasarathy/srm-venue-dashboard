@@ -70,15 +70,16 @@ def inject_dept_button_css(meta: dict) -> None:
         st.markdown(f"<style>{''.join(rules)}</style>", unsafe_allow_html=True)
 
 
-def folder_card(d: dict, dk: str, n: int) -> str:
+def folder_card(d: dict, dk: str, n: int, default_sem: str) -> str:
     c, bg = dept_theme(d)
     slug = dept_slug(dk)
-    extra = f" · {hx(d['semester'])}" if d.get("semester") else ""
+    sem = d.get("semester") or default_sem
     return (
         f'<div class="g-folder" data-dept="{slug}" style="--c:{c};--bg:{bg}">'
         f'<div class="g-icon">{hx(d.get("icon", ""))}</div>'
         f'<div class="g-id">{hx(dk)}</div>'
-        f'<div class="g-name">{hx(d["name"])}{extra}</div>'
+        f'<div class="g-name">{hx(d["name"])}</div>'
+        f'<div class="g-name" style="margin-top:2px;font-size:10px;">{hx(sem)}</div>'
         f'<span class="g-count">{n} sections</span></div>'
     )
 
@@ -92,13 +93,13 @@ def hero_block(title: str, subtitle: str) -> str:
     )
 
 
-def dept_banner_html(dept: dict, dept_key: str, records: list[dict]) -> str:
+def dept_banner_html(dept: dict, dept_key: str, records: list[dict], default_sem: str) -> str:
     c, bg = dept_theme(dept)
-    sem = f" · {hx(dept['semester'])}" if dept.get("semester") else ""
+    sem = dept.get("semester") or default_sem
     return (
         f'<div class="dept-banner" style="--banner-c:{c};--banner-bg:{bg}">'
         f'<h2>{hx(dept.get("icon",""))} {hx(dept_key)} — {hx(dept["name"])}</h2>'
-        f"<p>{len(records)} sections · {len({r['year'] for r in records})} years{sem} · "
+        f"<p>{len(records)} sections · {len({r['year'] for r in records})} years · {hx(sem)} · "
         f"share this view: the URL keeps the programme</p></div>"
     )
 
@@ -420,6 +421,7 @@ def main() -> None:
     cfg = load_config()
     catalog, errors, occ = load_catalog(data_stamp(ROOT, DATA_DIR))
     meta = dept_map(cfg)
+    default_sem = cfg.get("semester", "2026-27 Odd Semester")
     n_sec = sum(len(v) for v in catalog.values())
     n_ok = sum(1 for v in catalog.values() if v)
 
@@ -464,7 +466,7 @@ def main() -> None:
                 d = meta[dk]
                 n = len(catalog.get(dk, []))
                 with cols[j]:
-                    st.markdown(folder_card(d, dk, n), unsafe_allow_html=True)
+                    st.markdown(folder_card(d, dk, n, default_sem), unsafe_allow_html=True)
                     if st.button("Open →", key=f"d_{dk}", use_container_width=True, help=d["name"]):
                         nav(dept=dk)
                         st.rerun()
@@ -473,7 +475,7 @@ def main() -> None:
                 """
 This link is **public** — anyone can open it. No login.
 
-1. Replace the Excel / Word / `.xls` file in the matching folder under `data/`. Any filename works; year is read from I / II / III / IV in the name.
+1. Replace the Excel / Word / `.pdf` file in the matching folder under `data/` for **2026-27 Odd** semester.
 2. Push to GitHub. Streamlit Cloud reloads this public link automatically.
 3. Unusual layout? Put `venues.csv` in that department folder (copy `data/_template_venues.csv`). CSV wins over parsing.
 4. New programme: add one entry in `config.json` and a folder under `data/`.
@@ -491,7 +493,7 @@ This link is **public** — anyone can open it. No login.
             nav(dept=None, day=None)
             st.rerun()
 
-    st.markdown(dept_banner_html(dept, dept_key, records), unsafe_allow_html=True)
+    st.markdown(dept_banner_html(dept, dept_key, records, default_sem), unsafe_allow_html=True)
 
     if not records:
         st.warning("No sections found. Drop new files in `data/` (or add `venues.csv`) and refresh.")

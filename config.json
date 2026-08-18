@@ -1,6 +1,7 @@
 {
   "title": "SRM Institute of Science and Technology — Ramapuram Campus",
-  "subtitle": "All Programme Venue Dashboard  |  2025-26 Even Semester",
+  "semester": "2026-27 Odd Semester",
+  "subtitle": "All Programme Venue Dashboard  |  2026-27 Odd Semester",
   "departments": [
     {
       "id": "CSE",
@@ -18,8 +19,7 @@
       "color": "#EA4335",
       "bg": "#FCE8E6",
       "parser": "csgt_pdf",
-      "path": "CS_GT",
-      "semester": "2026-27 Odd"
+      "path": "CS_GT"
     },
     {
       "id": "BIOTECH",

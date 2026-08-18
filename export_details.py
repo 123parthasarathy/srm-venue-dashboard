@@ -52,10 +52,10 @@ def safe_sheet(name: str) -> str:
     return cleaned or "Sheet"
 
 
-def write_dept_sheet(wb, sheet_name, full_name, records):
+def write_dept_sheet(wb, sheet_name, full_name, records, semester):
     ws = wb.create_sheet(safe_sheet(sheet_name))
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=11)
-    c = ws.cell(1, 1, f"SRM Ramapuram — {full_name} — 2025-26 Even Sem")
+    c = ws.cell(1, 1, f"SRM Ramapuram — {full_name} — {semester}")
     c.font, c.fill, c.alignment = title_font, title_fill, center
     if not records:
         ws.cell(3, 1, "No data")
@@ -102,10 +102,10 @@ def write_dept_sheet(wb, sheet_name, full_name, records):
     ws.column_dimensions["K"].width = 36
 
 
-def write_summary(ws, rows):
+def write_summary(ws, rows, semester):
     ws.title = "Summary"
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=7)
-    c = ws.cell(1, 1, "SRM Ramapuram — All Programme Venue Summary (2025-26 Even Sem)")
+    c = ws.cell(1, 1, f"SRM Ramapuram — All Programme Venue Summary ({semester})")
     c.font, c.fill, c.alignment = title_font, title_fill, center
     headers = ["S.No", "Department", "Year", "Section", "Venue / Room", "Faculty Advisor", "Rotation Venues"]
     for ci, h in enumerate(headers, 1):
@@ -151,6 +151,7 @@ def write_csv(path, records, dept_id):
 def main():
     os.makedirs(DETAILS_DIR, exist_ok=True)
     cfg = json.load(open(CONFIG_PATH, encoding="utf-8"))
+    semester = cfg.get("semester", "2026-27 Odd Semester")
     catalog, errors = load_all(DATA_DIR, cfg["departments"])
     meta = {d["id"]: d for d in cfg["departments"]}
 
@@ -158,7 +159,7 @@ def main():
     wb = Workbook()
     for d in cfg["departments"]:
         recs = catalog.get(d["id"], [])
-        write_dept_sheet(wb, d["id"], d["name"], recs)
+        write_dept_sheet(wb, d["id"], d["name"], recs, semester)
         write_csv(os.path.join(DETAILS_DIR, f"{d['id'].replace(' ', '_').replace('&', 'and')}.csv"), recs, d["id"])
         for rec in recs:
             summary_rows.append(
@@ -173,7 +174,7 @@ def main():
             )
         print(f"{d['id']:12} {len(recs):3} sections")
 
-    write_summary(wb.active, summary_rows)
+    write_summary(wb.active, summary_rows, semester)
     xlsx = os.path.join(DETAILS_DIR, "All_Venue_Details.xlsx")
     wb.save(xlsx)
 
@@ -188,7 +189,7 @@ def main():
     note = os.path.join(DETAILS_DIR, "FOLDER.txt")
     with open(note, "w", encoding="utf-8") as f:
         f.write(
-            "SRM Ramapuram venue details (2025-26 Even Semester)\n"
+            f"SRM Ramapuram venue details ({semester})\n"
             "==================================================\n\n"
             f"Public link (anyone can view, no login):\n{PUBLIC_LINK}\n\n"
             f"Programmes: {len(cfg['departments'])}\n"
