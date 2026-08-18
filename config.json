@@ -1,0 +1,108 @@
+{
+  "title": "SRM Institute of Science and Technology — Ramapuram Campus",
+  "subtitle": "All Programme Venue Dashboard  |  2025-26 Even Semester",
+  "departments": [
+    {
+      "id": "CSE",
+      "name": "Computer Science & Engineering",
+      "icon": "💻",
+      "parser": "excel_sections",
+      "path": "CSE"
+    },
+    {
+      "id": "CS & GT",
+      "name": "Cyber Security and Gaming Technology",
+      "icon": "🎮",
+      "parser": "excel_sections",
+      "path": "CS_GT"
+    },
+    {
+      "id": "BIOTECH",
+      "name": "Biotechnology",
+      "icon": "🧬",
+      "parser": "excel_sections",
+      "path": "BIOTECH TT EVEN SEM 25-26  REVISED 8.1.25.xlsx"
+    },
+    {
+      "id": "Bio-Med",
+      "name": "Biomedical Engineering",
+      "icon": "🏥",
+      "parser": "excel_sections",
+      "path": "Bio-Med"
+    },
+    {
+      "id": "MECH",
+      "name": "Mechanical Engineering",
+      "icon": "⚙️",
+      "parser": "mech",
+      "path": "MECH_DAYWise_Class _TIME TABLE EVEN SEMESTER (2025-26).xlsx"
+    },
+    {
+      "id": "CIVIL",
+      "name": "Civil Engineering",
+      "icon": "🏗️",
+      "parser": "civil_docx",
+      "path": "."
+    },
+    {
+      "id": "EEE",
+      "name": "Electrical & Electronics Engineering",
+      "icon": "⚡",
+      "parser": "eee_xls",
+      "path": "EEE time table.xls"
+    },
+    {
+      "id": "CSBS",
+      "name": "Computer Science & Business Systems",
+      "icon": "📊",
+      "parser": "iot_csbs",
+      "path": "IOT, CSBS.xlsx",
+      "sub_dept": "CSBS"
+    },
+    {
+      "id": "IoT",
+      "name": "Internet of Things",
+      "icon": "📡",
+      "parser": "iot_csbs",
+      "path": "IOT, CSBS.xlsx",
+      "sub_dept": "IoT"
+    },
+    {
+      "id": "ECE",
+      "name": "Electronics & Communication Engg",
+      "icon": "📟",
+      "parser": "ece",
+      "path": "ECE-TT 25-26 EVEN sem.xlsx"
+    },
+    {
+      "id": "BDA & CC",
+      "name": "Big Data Analytics & Cloud Computing",
+      "icon": "📈",
+      "parser": "excel_sections",
+      "path": "BDA_CC"
+    },
+    {
+      "id": "IT",
+      "name": "Information Technology",
+      "icon": "🖥️",
+      "parser": "it_docx",
+      "path": "IT"
+    },
+    {
+      "id": "AIML",
+      "name": "CSE (AI & Machine Learning)",
+      "icon": "🤖",
+      "parser": "excel_sections",
+      "path": "AIML_AI",
+      "sheet_group": "AIML"
+    },
+    {
+      "id": "AI",
+      "name": "CSE (Artificial Intelligence)",
+      "icon": "🧠",
+      "parser": "excel_sections",
+      "path": "AIML_AI",
+      "sheet_group": "AI"
+    }
+  ]
+}

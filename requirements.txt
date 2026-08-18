@@ -1,5 +1,5 @@
-streamlit
-openpyxl
-xlrd
-pandas
-python-docx
+streamlit>=1.32.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+pandas>=2.0.0
+python-docx>=1.1.0
